@@ -79,21 +79,7 @@ static void MX_GPIO_Init(void);
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
-void ledsOn()
-{
-	HAL_GPIO_WritePin(GreenLED_GPIO_Port, GreenLED_Pin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(RedLED_GPIO_Port, RedLED_Pin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(BlueLED_GPIO_Port, BlueLED_Pin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(OrangeLED_GPIO_Port, OrangeLED_Pin, GPIO_PIN_SET);
-}
 
-void ledsOff()
-{
-	HAL_GPIO_WritePin(GreenLED_GPIO_Port, GreenLED_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(RedLED_GPIO_Port, RedLED_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(BlueLED_GPIO_Port, BlueLED_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(OrangeLED_GPIO_Port, OrangeLED_Pin, GPIO_PIN_RESET);
-}
 /**
   * @brief  The application entry point.
   *
@@ -130,21 +116,34 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+
   while (1) {
    if (HAL_GPIO_ReadPin(Button_GPIO_Port, Button_Pin) == GPIO_PIN_SET) {
 	   HAL_Delay(100);
 	   if (HAL_GPIO_ReadPin(Button_GPIO_Port, Button_Pin) == GPIO_PIN_SET) {
-		   ledsOn();
+
 		   ++MessageCounter;
-		   MessageLength = sprintf(DataToSend, "Message No. %d\n\r", MessageCounter);
+		   MessageLength = sprintf(DataToSend, "Message No. %d\n", MessageCounter);
 		   CDC_Transmit_FS(DataToSend, MessageLength);
+
+		   int i=0;
+		   for(i=0;i<300;i++){
+			   char *c = (0x8010000+i);
+			   char buff[3];
+			   buff[0]=*c;
+			   buff[1]='\n';
+			   CDC_Transmit_FS(buff, 2);
+		   }
+
+
 	   }
 
    }
 
    if(ReceivedDataFlag == 1){
       ReceivedDataFlag = 0;
-      ledsOff();
+
       MessageLength = sprintf(DataToSend, "Received: %s\n\r", ReceivedData);
       CDC_Transmit_FS(DataToSend, MessageLength);
      }
@@ -228,23 +227,12 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOD_CLK_ENABLE();
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, GreenLED_Pin|OrangeLED_Pin|RedLED_Pin|BlueLED_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : Button_Pin */
   GPIO_InitStruct.Pin = Button_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(Button_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : GreenLED_Pin OrangeLED_Pin RedLED_Pin BlueLED_Pin */
-  GPIO_InitStruct.Pin = GreenLED_Pin|OrangeLED_Pin|RedLED_Pin|BlueLED_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
 }
 
