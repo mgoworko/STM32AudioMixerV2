@@ -55,6 +55,8 @@
 #include "usbd_cdc_if.h" // Plik bedacy interfejsem uzytkownika do kontrolera USB
 /* USER CODE END Includes */
 
+#define fileaddr 0x8010000
+#define dataoffset 0x5E
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
@@ -63,7 +65,7 @@ uint8_t DataToSend[40]; // Tablica zawierajaca dane do wyslania
 uint8_t MessageCounter = 0; // Licznik wyslanych wiadomosci
 uint8_t MessageLength = 0; // Zawiera dlugosc wysylanej wiadomosci
 
-uint8_t ReceivedData[40]; // Tablica przechowujaca odebrane dane
+uint8_t ReceivedData[5]; // Tablica przechowujaca odebrane dane
 uint8_t ReceivedDataFlag = 0; // Flaga informujaca o odebraniu danych
 /* USER CODE END PV */
 
@@ -128,13 +130,13 @@ int main(void)
 		   CDC_Transmit_FS(DataToSend, MessageLength);
 
 		   int i=0;
+		   char buff[301];
+
 		   for(i=0;i<300;i++){
-			   char *c = (0x8010000+i);
-			   char buff[3];
-			   buff[0]=*c;
-			   buff[1]='\n';
-			   CDC_Transmit_FS(buff, 2);
+			   buff[i]=*(char*)(fileaddr+dataoffset+i);
 		   }
+		   buff[300]='\n';
+		   CDC_Transmit_FS(buff, 301);
 
 
 	   }
@@ -143,9 +145,8 @@ int main(void)
 
    if(ReceivedDataFlag == 1){
       ReceivedDataFlag = 0;
-
-      MessageLength = sprintf(DataToSend, "Received: %s\n\r", ReceivedData);
-      CDC_Transmit_FS(DataToSend, MessageLength);
+      ReceivedData[4]='\n';
+      while(CDC_Transmit_FS(ReceivedData, 5)==USBD_BUSY);
      }
 
   }
