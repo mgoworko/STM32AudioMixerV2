@@ -295,16 +295,16 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);
 
   // Zmienne zadeklarowane w pliku main.c
-    extern uint8_t ReceivedData[5]; // Tablica przechowujaca odebrane dane
+    extern uint8_t ReceivedData[60]; // Tablica przechowujaca odebrane dane
     extern uint8_t ReceivedDataFlag; // Flaga informujaca o odebraniu danych
 
     // Wyczyszczenie tablicy odebranych danych
     uint8_t iter;
-    for(iter = 0; iter<5; ++iter){
+    for(iter = 0; iter<60; ++iter){
      ReceivedData[iter] = 0;
     }
 
-    memcpy(ReceivedData, Buf, 4); // Przekopiowanie danych do naszej tablicy
+    memcpy(ReceivedData, Buf, 60); // Przekopiowanie danych do naszej tablicy
     ReceivedDataFlag = 1; // Ustawienie flagi odebrania danych
 
 

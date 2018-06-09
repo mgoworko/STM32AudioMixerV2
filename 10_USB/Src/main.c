@@ -61,11 +61,11 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-uint8_t DataToSend[40]; // Tablica zawierajaca dane do wyslania
+uint8_t DataToSend[80]; // Tablica zawierajaca dane do wyslania
 uint8_t MessageCounter = 0; // Licznik wyslanych wiadomosci
 uint8_t MessageLength = 0; // Zawiera dlugosc wysylanej wiadomosci
 
-uint8_t ReceivedData[5]; // Tablica przechowujaca odebrane dane
+uint8_t ReceivedData[80]; // Tablica przechowujaca odebrane dane
 uint8_t ReceivedDataFlag = 0; // Flaga informujaca o odebraniu danych
 /* USER CODE END PV */
 
@@ -145,8 +145,7 @@ int main(void)
 
    if(ReceivedDataFlag == 1){
       ReceivedDataFlag = 0;
-      ReceivedData[4]='\n';
-      while(CDC_Transmit_FS(ReceivedData, 5)==USBD_BUSY);
+      while(CDC_Transmit_FS(ReceivedData, 60) == USBD_BUSY);
      }
 
   }
