@@ -16,6 +16,18 @@ mixer:
 	bge end
 loop:
 	ldr r5, [r0, r4]
+	mov r6, r5
+
+	asr r6, r6, #17
+	lsl r6, r6, #16
+
+
+	lsl r5, r5, #16
+	asr r5, r5, #1
+	lsr r5, r5, #16
+
+	orr r5, r5, r6
+
 	ldr r6, [r1, r4]
 	shadd16 r5, r5, r6
 	str r5, [r2, r4]
