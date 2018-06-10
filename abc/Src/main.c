@@ -67,6 +67,7 @@ uint8_t MessageLength = 0; // Zawiera dlugosc wysylanej wiadomosci
 
 uint8_t ReceivedData[80]; // Tablica przechowujaca odebrane dane
 uint8_t ReceivedDataFlag = 0; // Flaga informujaca o odebraniu danych
+uint32_t fileindex = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -146,7 +147,10 @@ int main(void)
 
    if(ReceivedDataFlag == 1){
       ReceivedDataFlag = 0;
-      mixer(fileaddr + dataoffset, fileaddr + dataoffset, ReceivedData, 60);
+      mixer(fileaddr + dataoffset + fileindex, fileaddr + dataoffset, ReceivedData, 12);
+      fileindex += 60;
+      if (fileindex == 175800)
+    	  fileindex = 0;
       while(CDC_Transmit_FS(ReceivedData, 60) == USBD_BUSY);
      }
 
