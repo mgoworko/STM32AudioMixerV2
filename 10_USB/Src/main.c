@@ -67,11 +67,14 @@ uint8_t MessageLength = 0; // Zawiera dlugosc wysylanej wiadomosci
 
 uint8_t ReceivedData[80]; // Tablica przechowujaca odebrane dane
 uint8_t ReceivedDataFlag = 0; // Flaga informujaca o odebraniu danych
+uint8_t Zeros[80];
+unsigned int fileindex=0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+extern void mixer(char* inPtr, char* srcPtr, char* outPtr, int dataCount);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -118,7 +121,9 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-
+  int i=0;
+  for(i=0;i<80;i++)
+	  Zeros[i]=0x0;
 
   while (1) {
    if (HAL_GPIO_ReadPin(Button_GPIO_Port, Button_Pin) == GPIO_PIN_SET) {
@@ -145,6 +150,9 @@ int main(void)
 
    if(ReceivedDataFlag == 1){
       ReceivedDataFlag = 0;
+      mixer(fileaddr + dataoffset+fileindex, ReceivedData, ReceivedData, 60);
+      fileindex+=60;
+      if(fileindex==175800) fileindex=0;
       while(CDC_Transmit_FS(ReceivedData, 60) == USBD_BUSY);
      }
 
