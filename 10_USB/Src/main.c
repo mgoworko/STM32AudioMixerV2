@@ -55,26 +55,28 @@
 #include "usbd_cdc_if.h" // Plik bedacy interfejsem uzytkownika do kontrolera USB
 /* USER CODE END Includes */
 
-#define fileaddr 0x8010000
-#define dataoffset 0x5E
+#define FILEADDR 0x8010000
+#define DATAOFFSET 0x5E
+#define DATAEND 0x2AEB8
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 uint8_t DataToSend[80]; // Tablica zawierajaca dane do wyslania
-uint8_t MessageCounter = 0; // Licznik wyslanych wiadomosci
-uint8_t MessageLength = 0; // Zawiera dlugosc wysylanej wiadomosci
 
 uint8_t ReceivedData[80]; // Tablica przechowujaca odebrane dane
 uint8_t ReceivedDataFlag = 0; // Flaga informujaca o odebraniu danych
-uint8_t Zeros[80];
-unsigned int fileindex=0;
+uint32_t fileindex=0;
+uint8_t dct=0;
+
+uint8_t l1[3]={0,1,1};
+uint8_t l2[3]={0,0,1};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-extern void mixer(char* inPtr, char* srcPtr, char* outPtr, int dataCount);
+extern void mixer(uint8_t* inPtr, uint8_t* srcPtr, uint8_t* outPtr, int volumeDown);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -82,7 +84,6 @@ extern void mixer(char* inPtr, char* srcPtr, char* outPtr, int dataCount);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-
 /* USER CODE END 0 */
 
 /**
@@ -113,7 +114,9 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
+
   MX_GPIO_Init();
+
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
@@ -121,39 +124,28 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  int i=0;
-  for(i=0;i<80;i++)
-	  Zeros[i]=0x0;
+
+  uint8_t md=0;
 
   while (1) {
-   if (HAL_GPIO_ReadPin(Button_GPIO_Port, Button_Pin) == GPIO_PIN_SET) {
-	   HAL_Delay(100);
-	   if (HAL_GPIO_ReadPin(Button_GPIO_Port, Button_Pin) == GPIO_PIN_SET) {
 
-		   ++MessageCounter;
-		   MessageLength = sprintf(DataToSend, "Message No. %d\n", MessageCounter);
-		   CDC_Transmit_FS(DataToSend, MessageLength);
-
-		   int i=0;
-		   char buff[301];
-
-		   for(i=0;i<300;i++){
-			   buff[i]=*(char*)(fileaddr+dataoffset+i);
-		   }
-		   buff[300]='\n';
-		   CDC_Transmit_FS(buff, 301);
-
-
-	   }
-
+   if(dct==100){
+	   md++;
+	   if(md==3) md=0;
+	   HAL_GPIO_WritePin(BlueLED_GPIO_Port, BlueLED_Pin, l1[md]);
+	   HAL_GPIO_WritePin(GreenLED_GPIO_Port, GreenLED_Pin, l2[md]);
+	   dct=0;
    }
 
+
    if(ReceivedDataFlag == 1){
-      ReceivedDataFlag = 0;
-      mixer(fileaddr + dataoffset+fileindex, ReceivedData, ReceivedData, 60);
-      fileindex+=60;
-      if(fileindex==175800) fileindex=0;
-      while(CDC_Transmit_FS(ReceivedData, 60) == USBD_BUSY);
+	   ReceivedDataFlag = 0;
+	   uint8_t* fileStart = (uint8_t *) FILEADDR + DATAOFFSET + fileindex;
+	   mixer(fileStart, ReceivedData, ReceivedData, md);
+	   fileindex += 60;
+	   if (fileindex == DATAEND)
+		   fileindex = 0;
+	   while(CDC_Transmit_FS(ReceivedData, 60) == USBD_BUSY);
      }
 
   }
@@ -235,12 +227,23 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOD, GreenLED_Pin|OrangeLED_Pin|RedLED_Pin|BlueLED_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : Button_Pin */
   GPIO_InitStruct.Pin = Button_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(Button_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : GreenLED_Pin OrangeLED_Pin RedLED_Pin BlueLED_Pin */
+  GPIO_InitStruct.Pin = GreenLED_Pin|OrangeLED_Pin|RedLED_Pin|BlueLED_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
 }
 

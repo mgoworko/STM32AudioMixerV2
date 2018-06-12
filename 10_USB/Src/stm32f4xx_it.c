@@ -41,7 +41,6 @@
 
 /* External variables --------------------------------------------------------*/
 extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
-
 /******************************************************************************/
 /*            Cortex-M4 Processor Interruption and Exception Handlers         */ 
 /******************************************************************************/
@@ -173,6 +172,7 @@ void PendSV_Handler(void)
 /**
 * @brief This function handles System tick timer.
 */
+
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
@@ -180,8 +180,14 @@ void SysTick_Handler(void)
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   HAL_SYSTICK_IRQHandler();
+  extern uint8_t dct;
   /* USER CODE BEGIN SysTick_IRQn 1 */
-
+  if(HAL_GPIO_ReadPin(Button_GPIO_Port, Button_Pin) == GPIO_PIN_SET) {
+	  dct++;
+  }
+  else{
+	  dct=0;
+  }
   /* USER CODE END SysTick_IRQn 1 */
 }
 
