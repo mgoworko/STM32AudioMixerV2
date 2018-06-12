@@ -1,30 +1,29 @@
 	.globl mixer
 	.type mixer,%function
 
-#r0 - wskaŸnik na plik w pamiêci
-#r1 - wskaŸnik na plik do zmixowania
-#r2 - wskaŸnik na bufor wynikowy
+#r0 - wskaÅºnik na plik w pamiÄ™ci
+#r1 - wskaÅºnik na plik do zmixowania
+#r2 - wskaÅºnik na bufor wynikowy
 #r3 - stopien sciszenia danych
-#r4 - licznik do pêtli i offsetu danych
-#r5 - dane wczytane z pliku z pamiêci
+#r4 - licznik do pÄ™tli i offsetu danych
+#r5 - dane wczytane z pliku z pamiÄ™ci
 #r6 - dane wczytane z pliku do zmixowania
 
 mixer:
 	push {r4-r6}
 	mov r4, #0
-loop:
+	cmp r3, #0
+	ble mix
+quiet:
 	ldr r5, [r0, r4]
+	
 	mov r6, r5
-
 	asr r6, r6, #16
 	asr r6, r3
 	lsl r6, r6, #16
-
-
 	lsl r5, r5, #16
 	asr r5, r3
 	lsr r5, r5, #16
-
 	orr r5, r5, r6
 
 	ldr r6, [r1, r4]
@@ -32,7 +31,16 @@ loop:
 	str r5, [r2, r4]
 	add r4, r4, #4
 	cmp r4, #60
-	bne loop
+	bne quiet
+	b end
+mix:
+	ldr r5, [r0, r4]
+	ldr r6, [r1, r4]
+	shadd16 r5, r5, r6
+	str r5, [r2, r4]
+	add r4, r4, #4
+	cmp r4, #60
+	bne mix
 end:
 	pop {r4-r6}
 	bx lr
