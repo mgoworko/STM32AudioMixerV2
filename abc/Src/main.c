@@ -55,8 +55,9 @@
 #include "usbd_cdc_if.h" // Plik bedacy interfejsem uzytkownika do kontrolera USB
 /* USER CODE END Includes */
 
-#define fileaddr 0x8010000
-#define dataoffset 0x5E
+#define FILEADDR 0x8010000
+#define DATAOFFSET 0x5E
+#define DATAEND 0x2AEB8
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
@@ -73,7 +74,7 @@ uint32_t fileindex = 0;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-extern void mixer(char* inPtr, char* srcPtr, char* outPtr, int dataCount);
+extern void mixer(uint8_t* inPtr, uint8_t* srcPtr, uint8_t* outPtr, int volumeDown);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -122,38 +123,27 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 
 
-  while (1) {
-   if (HAL_GPIO_ReadPin(Button_GPIO_Port, Button_Pin) == GPIO_PIN_SET) {
-	   HAL_Delay(100);
-	   if (HAL_GPIO_ReadPin(Button_GPIO_Port, Button_Pin) == GPIO_PIN_SET) {
+  while (1)
+  {
+     if (HAL_GPIO_ReadPin(Button_GPIO_Port, Button_Pin) == GPIO_PIN_SET)
+     {
+	    HAL_Delay(100);
+	    if (HAL_GPIO_ReadPin(Button_GPIO_Port, Button_Pin) == GPIO_PIN_SET)
+	    {
 
-		   ++MessageCounter;
-		   MessageLength = sprintf(DataToSend, "Message No. %d\n", MessageCounter);
-		   CDC_Transmit_FS(DataToSend, MessageLength);
+  	    }
 
-		   int i=0;
-		   char buff[301];
-
-		   for(i=0;i<300;i++){
-			   buff[i]=*(char*)(fileaddr+dataoffset+i);
-		   }
-		   buff[300]='\n';
-		   CDC_Transmit_FS(buff, 301);
-
-
-	   }
-
-   }
-
-   if(ReceivedDataFlag == 1){
-      ReceivedDataFlag = 0;
-      mixer(fileaddr + dataoffset + fileindex, fileaddr + dataoffset, ReceivedData, 12);
-      fileindex += 60;
-      if (fileindex == 175800)
-    	  fileindex = 0;
-      while(CDC_Transmit_FS(ReceivedData, 60) == USBD_BUSY);
      }
-
+     if(ReceivedDataFlag == 1)
+     {
+        ReceivedDataFlag = 0;
+        uint8_t* fileStart = (uint8_t *) FILEADDR + DATAOFFSET + fileindex;
+        mixer(fileStart, ReceivedData, ReceivedData, 2);
+        fileindex += 60;
+        if (fileindex == DATAEND)
+          fileindex = 0;
+         while(CDC_Transmit_FS(ReceivedData, 60) == USBD_BUSY);
+      }
   }
   /* USER CODE END 3 */
 
