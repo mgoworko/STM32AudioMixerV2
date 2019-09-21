@@ -48,4 +48,3 @@ while portion:
     portion = fs.read(portionSize)
 
 print("File mixed on stm32f4 board!")
-
